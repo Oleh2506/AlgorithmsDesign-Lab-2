@@ -9,7 +9,10 @@ def depth_limited_search(p: Problem, limit):
 
     initial_state = p.initial_state
     node = func_timeout.func_timeout(30 * 60, DLS_search, args =[p, Node(state = initial_state, parent = None, goal_state = p.goal_state), limit])
-    return node.get_path_to_node()
+    if node:
+        return node.get_path_to_node()
+    else:
+        return None
 
 def DLS_search(p: Problem, node: Node, limit):
 
