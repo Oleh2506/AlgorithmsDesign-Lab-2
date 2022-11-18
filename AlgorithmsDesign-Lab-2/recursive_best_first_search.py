@@ -1,3 +1,4 @@
+from threading import stack_size
 from node import Node
 from sys import maxsize
 from problem import Problem
@@ -5,18 +6,19 @@ from pyamaze import agent, maze
 import os
 import psutil
 import func_timeout
+import sys
 
 def recursive_best_first_search(p: Problem):
 
     initial_state = p.initial_state
     states_in_memory = 0
 
-    node = func_timeout.func_timeout(30 * 60, RBFS_search, args = [p, Node(state = initial_state, parent = None, goal_state = p.goal_state), maxsize, states_in_memory])[0]
+    node = func_timeout.func_timeout(30 * 60, RBFS_search, args = [p, Node(state = initial_state, parent = None, goal_state = p.goal_state), maxsize, states_in_memory, 0])[0]
   
     return node.get_path_to_node()
 
-def RBFS_search(p: Problem, node: Node, f_limit, states_in_memory):
-
+def RBFS_search(p: Problem, node: Node, f_limit, states_in_memory, depth):
+    
     if psutil.Process(os.getpid()).memory_info().rss > 1024**3:  
         raise MemoryError("1 Gb memory exceeded")
 
@@ -27,7 +29,7 @@ def RBFS_search(p: Problem, node: Node, f_limit, states_in_memory):
     
     successors = node.expand(p.m)
 
-    if not len(successors):
+    if not len(successors) or depth - 1 == sys.getrecursionlimit():
         return None, maxsize
 
     for s in successors:
@@ -50,7 +52,7 @@ def RBFS_search(p: Problem, node: Node, f_limit, states_in_memory):
         if states_in_memory > p.max_states_in_memory:
             p.max_states_in_memory = states_in_memory
         
-        result, successors[0].f_value = RBFS_search(p, successors[0], min(f_limit, alternative_f_value), states_in_memory + len(successors))
+        result, successors[0].f_value = RBFS_search(p, successors[0], min(f_limit, alternative_f_value), states_in_memory + len(successors), depth + 1)
         
         if result != None:
             break
